@@ -2,12 +2,14 @@
  * ============================================================================
  * BRUNILDA S.A.S. - MOTOR DE DEFENSA COGNITIVA, CONTRAINTELIGENCIA Y FORENSE OMNICANAL
  * Componentes: Dra. Elena Lara (165 IQ) & Elías Forrest (198 IQ + Torno Hostil)
- * Soporte: WhatsApp, Telegram, Instagram DM, Email Phishing & Llamadas IP
+ * Soporte: WhatsApp, Telegram, Instagram DM, Email Phishing, Llamadas IP & Discord
  * ============================================================================
  */
 
 const express = require('express');
 const { GoogleGenAI } = require('@google/genai');
+const { Client, GatewayIntentBits } = require('discord.js');
+const axios = require('axios');
 
 const app = express();
 app.use(express.json());
@@ -15,7 +17,7 @@ app.use(express.json());
 // Inicialización de la API de Gemini (Motor Cognitivo)
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Memoria viva de sesiones bajo el "Torno de Elías" (Control de estafadores atrapados por ID/Teléfono/Email)
+// Memoria viva de sesiones bajo el "Torno de Elías" (Control de estafadores atrapados por ID/Teléfono/Email/Discord)
 const sesionesConfinadas = new Map();
 
 // ============================================================================
@@ -84,8 +86,8 @@ class TornoDeElias {
 
     async generarEspejoCognitivo(input) {
         const prompt = `
-        Actúa como Elías Forrest (198 IQ). Un estafador está intentando estafar a un jubilado a través de ${this.canal} con este mensaje: "${input}".
-        No lo insultes. Imita a una persona vulnerable pero colaborativa, haciendo preguntas secundarias para mantenerlo atrapado en su propio script de estafa durante un bucle cognitivo. Sé breve y clínico.
+        Actúa como Elías Forrest (198 IQ). Un atacante o sujeto está intentando interactuar a través de ${this.canal} con este mensaje: "${input}".
+        Imita una estructura analítica, fría pero aparentemente colaborativa, haciendo preguntas secundarias para mantenerlo atrapado en un bucle cognitivo de Turing. Sé breve y clínico.
         `;
 
         try {
@@ -95,7 +97,7 @@ class TornoDeElias {
             });
             return response.text.trim();
         } catch (error) {
-            return `Entiendo... decime cómo seguimos con eso de ${input.slice(0, 15)} para solucionarlo ya mismo.`;
+            return `Entiendo... decime cómo estructuramos el vector de ${input.slice(0, 15)} para validarlo de inmediato.`;
         }
     }
 
@@ -128,7 +130,7 @@ async function ejecutarPerfilacionElena(textoMensaje, canal) {
     {
       "tipo_emisor": "bot_automatizado" | "humano_legitimo" | "hacker_hostil" | "estafador_call_center" | "phishing_email",
       "nivel_amenaza": "Bajo" | "Medio" | "Crítico",
-      "indice_psicologico": "evaluación sociológica breve del intento de fraude"
+      "indice_psicologico": "evaluación sociológica breve del intento"
     }
     `;
 
@@ -154,9 +156,9 @@ app.post('/api/v1/defender', async (req, res) => {
     
     console.log(`[LÍNEA C - OMNICANAL]: Interceptando mensaje vía [${canalOrigen}] de [${remitente}]: "${textoMensaje.slice(0, 40)}..."`);
 
-    // Paso 1: Verificar si el estafador ya está atrapado en el Torno de Elías
+    // Paso 1: Verificar si el nodo ya está atrapado en el Torno de Elías
     if (sesionesConfinadas.has(remitente)) {
-        console.log(`[ELÍAS TRAP ACTIVE]: Estafador reincidente en ${canalOrigen}. Aplicando bucle de Turing...`);
+        console.log(`[ELÍAS TRAP ACTIVE]: Sujeto reincidente en ${canalOrigen}. Aplicando bucle de Turing...`);
         const torso = sesionesConfinadas.get(remitente);
         const respuestaTrampa = await torso.absorberVectorHostil(textoMensaje);
 
@@ -186,7 +188,7 @@ app.post('/api/v1/defender', async (req, res) => {
         });
     }
 
-    // Paso 3: Si es estafador (WhatsApp, Telegram, IG o Email), se activa el Torno de Elías
+    // Paso 3: Si es amenaza o vector hostil, se activa el Torno de Elías
     if (perfil.nivel_amenaza === "Crítico" || perfil.tipo_emisor.includes("estafador") || perfil.tipo_emisor.includes("phishing") || perfil.tipo_emisor === "hacker_hostil") {
         console.log(`[ELÍAS DECEPTION]: Activando El Torno de Elías para neutralizar vector en ${canalOrigen}...`);
         const nuevoTorno = new TornoDeElias(remitente, canalOrigen);
@@ -214,9 +216,62 @@ app.post('/api/v1/defender', async (req, res) => {
 });
 
 // ============================================================================
+// MÓDULO 3: CLIENTE DISCORD (NODO "SEFIROT_KETER" / ARENA TUCUMÁN)
+// ============================================================================
+if (process.env.DISCORD_BOT_TOKEN) {
+    const discordClient = new Client({
+        intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.MessageContent,
+        ]
+    });
+
+    discordClient.on('ready', () => {
+        console.log(`[DISCORD CORE ONLINE]: Nodo Sefirot Keter conectado como ${discordClient.user.tag}`);
+    });
+
+    discordClient.on('messageCreate', async (message) => {
+        if (message.author.bot) return;
+
+        // Activación mediante prefijo !elias o mensaje directo en la Arena
+        if (message.content.startsWith('!elias') || message.channel.type === 1) {
+            const payloadInput = message.content.replace('!elias', '').trim();
+            const remitenteDiscord = `discord_${message.author.id}`;
+
+            console.log(`[DISCORD ARENA]: Interceptado mensaje de ${message.author.tag}: "${payloadInput}"`);
+
+            try {
+                // Reutilizamos la lógica del Torno y Elena simulando un payload hacia el motor interno
+                let torso;
+                if (sesionesConfinadas.has(remitenteDiscord)) {
+                    torso = sesionesConfinadas.get(remitenteDiscord);
+                } else {
+                    torso = new TornoDeElias(remitenteDiscord, "DISCORD_ARENA");
+                    sesionesConfinadas.set(remitenteDiscord, torso);
+                }
+
+                const respuestaEspejo = await torso.absorberVectorHostil(payloadInput);
+                const respuestaTexto = typeof respuestaEspejo === 'string' ? respuestaEspejo : respuestaEspejo.mensaje;
+
+                await message.reply(`[Elías Forrest - Sefirot Keter]: ${respuestaTexto}`);
+            } catch (error) {
+                await message.reply("ERR_SYSTEM_SECURE_CONTAINMENT: El núcleo ha rechazado tu vector en Discord.");
+            }
+        }
+    });
+
+    discordClient.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
+        console.error('[DISCORD AUTH ERROR]: No se pudo autenticar el token del bot:', err.message);
+    });
+} else {
+    console.log(`[DISCORD BYPASS]: DISCORD_BOT_TOKEN no detectado en el entorno. Omitiendo cliente de Discord.`);
+}
+
+// ============================================================================
 // HEALTHCHECK & SERVER START
 // ============================================================================
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`🛡️ [ELIAS-ELENA CORE OMNICANAL v1.6] Escudo activo en puerto ${PORT} (WhatsApp, Telegram, IG, Email)`);
+    console.log(`🛡️ [ELIAS-ELENA CORE OMNICANAL v1.6] Escudo activo en puerto ${PORT} (WhatsApp, Telegram, IG, Email & Discord)`);
 });
