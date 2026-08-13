@@ -19,7 +19,8 @@ import gradio as gr
 from google import genai
 from google.genai import types
 
-RAW_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6Jgd314sXQpc1g1pE71zmA1Eaocn_Lj64IJIx-tvdwnmw")
+# SEGURIDAD NÚCLEO: Lectura segura de la clave vía variable de entorno
+RAW_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
 WEB_APP_SHEET_URL = "https://script.google.com/macros/s/AKfycbwts5uDaU8PrmUD0ovExIfR2LblZuB2yKpJT8lM-8L1rJcYDEZIzzj7xU2ukP4-oxlC0w/exec"
 
 ADMIN_EMAIL = "javieradrianlaraaracena@gmail.com"  
@@ -36,8 +37,11 @@ LINK_MERCADOPAGO_REAL = "https://link.mercadopago.com.ar/brunildasas"
 BTC_WALLET = "bc1qw575hmqvqagny6fu0fkaa5qypq2j6hefqckqslt9624qphxzy7fqxq63jr"
 
 try:
-    client = genai.Client(api_key=RAW_GEMINI_KEY)
-    print("🔑 [AUTENTICACIÓN]: Enlace seguro establecido con Gemini API.")
+    client = genai.Client(api_key=RAW_GEMINI_KEY) if RAW_GEMINI_KEY else None
+    if client:
+        print("🔑 [AUTENTICACIÓN]: Enlace seguro establecido con Gemini API.")
+    else:
+        print("⚠️ [ALERTA CORE]: RAW_GEMINI_KEY vacía. Configure la variable de entorno.")
 except Exception as e:
     client = None
     print(f"⚠️ [ALERTA CORE]: Fallo de API: {e}")
@@ -61,7 +65,7 @@ BANCO_DILEMAS = {
     ]
 }
 
-for lang in ["Deutsch", "Français", "日本語", "中文", "한국er"]:
+for lang in ["Deutsch", "Français", "日本語", "中文", "한국어"]:
     BANCO_DILEMAS[lang] = BANCO_DILEMAS["English"]
 
 TRADUCCIONES = {
@@ -94,7 +98,7 @@ TRADUCCIONES = {
         "lbl_entrada": "DEVELOP ARGUMENT OR INJECT SSL ATTACK / HOSTILE VECTOR",
         "placeholder_entrada": "Write foundations or attempt to breach the system...",
         "btn": "EXECUTE VECTOR / SUBMIT TO EVALUATION 🚀",
-        "legal_tit": "### ⚖️ PRIVACY PRIVACY & DATA PROTECTION (LAW 25.326 / GDPR)",
+        "legal_tit": "### ⚖️ PRIVACY POLICY & DATA PROTECTION (LAW 25.326 / GDPR)",
         "legal_body": "**1. DATA PROTECTION:** Your analytical vectors are processed confidentially under Law 25.326 and GDPR.\n\n**2. ACTIVE DEFENSE CORE:** Portable architecture compatible with retro consoles, MS-DOS, office environments, and Elias Forrest's relentless shielding.",
         "err_captcha": "🚫 [SECURITY LOCK]: INCORRECT CAPTCHA. Solve the math equation before processing.",
         "err_num": "🚫 [SECURITY LOCK]: CAPTCHA requires a valid integer numeric value.",
@@ -290,7 +294,7 @@ def evaluar_operacion_directa(idioma, nivel, dilema_texto, sig_key, respuesta, r
         except Exception as e:
             dictamen = f"⚠️ [GLITCH EN MATRIZ NEURONAL]: {str(e)}"
     else:
-        dictamen = "[MODO MOCKACTIVE]: Ejecución offline."
+        dictamen = "[MODO MOCKACTIVE]: Ejecución offline (Falta API Key en entorno)."
 
     es_aprobado = "[APROBADO]" in dictamen or "APPROVED" in dictamen or "Aprobado" in dictamen or "approved" in dictamen
     es_vaguedad = "[RECHAZADO_VAGUEDAD]" in dictamen or "RECHAZO POR VAGUEDAD" in dictamen
