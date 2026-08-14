@@ -1,220 +1,3 @@
-/**
- * ============================================================================
- * BRUNILDA S.A.S. - MOTOR DE DEFENSA COGNITIVA, CONTRAINTELIGENCIA Y FORENSE OMNICANAL
- * Componentes: Dra. Elena Lara (165 IQ) & Elías Forrest (198 IQ + Torno Hostil)
- * Soporte: WhatsApp (Gabriela & Elías Dual), Telegram, Instagram DM, Email Phishing, Discord & Licenciamiento B2B
- * ============================================================================
- */
-
-const express = require('express');
-const { GoogleGenAI } = require('@google/genai');
-const { Client, GatewayIntentBits } = require('discord.js');
-const axios = require('axios');
-
-const app = express();
-app.use(express.json());
-
-// Inicialización de la API de Gemini (Motor Cognitivo)
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-// Memoria viva de sesiones bajo el "Torno de Elías" (Control de estafadores atrapados por ID/Teléfono/Email/Discord)
-const sesionesConfinadas = new Map();
-
-// ============================================================================
-// CONFIGURACIÓN GLOBAL DE SEGURIDAD Y WHITELIST (REPARACIÓN DE NODO)
-// ============================================================================
-global.numerosLimpios = global.numerosLimpios || []; // Inicialización segura de la whitelist de números
-
-// ============================================================================
-// FUNCIÓN DE FILTRADO DE SEGURIDAD (BOT.JS)
-// ============================================================================
-function esNumeroExcluido(remitente) {
-    const numerosLimpios = global.numerosLimpios || []; 
-
-    // Verificación de existencia y filtrado
-    if (!remitente) return true;
-    
-    return numerosLimpios.some(numero => String(remitente).includes(String(numero)));
-}
-
-// ============================================================================
-// ADAPTADOR MULTICANAL: NORMALIZADOR UNIVERSAL DE ENTRADAS
-// ============================================================================
-function normalizarPayloadEntrante(req) {
-    const body = req.body || {};
-    let remitente = "nodo_anonimo";
-    let textoMensaje = "";
-    let canalOrigen = "API_GENÉRICA";
-    let subCanalDestino = "GENERAL"; // Permite distinguir entre Gabriela y Elías en WhatsApp
-
-    // 1. Detección de WhatsApp (Baileys / Meta Cloud API)
-    if (body.sender || body.from || body.entry) {
-        canalOrigen = "WHATSAPP";
-        remitente = body.sender || body.from || (body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from) || "whatsapp_user";
-        textoMensaje = body.message || body.text || (body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.text?.body) || "";
-        
-        // Bifurcación inteligente: Si el mensaje contiene comandos de seguridad o el emisor es marcado como hostil, va a Elías
-        subCanalDestino = body.canal_objetivo || "GABRIELA_OPERATIVA";
-    } 
-    // 2. Detección de Telegram
-    else if (body.message || body.callback_query) {
-        canalOrigen = "TELEGRAM";
-        const msg = body.message || body.callback_query.message;
-        remitente = msg?.from?.id ? String(msg.from.id) : "telegram_user";
-        textoMensaje = msg?.text || "";
-    } 
-    // 3. Detección de Instagram DM (Meta Webhooks)
-    else if (body.object === "instagram") {
-        canalOrigen = "INSTAGRAM";
-        remitente = body.entry?.[0]?.messaging?.[0]?.sender?.id || "ig_user";
-        textoMensaje = body.entry?.[0]?.messaging?.[0]?.message?.text || "";
-    } 
-    // 4. Detección de Email (SendGrid / Webhook de correo)
-    else if (body.email || body.subject || body.sender_email) {
-        canalOrigen = "EMAIL_PHISHING";
-        remitente = body.email || body.sender_email || "email_hostil";
-        textoMensaje = `Asunto: ${body.subject || ""}. Cuerpo: ${body.body || body.text || ""}`;
-    } 
-    // 5. Fallback Genérico para la API de Gabriela o pruebas directas
-    else {
-        remitente = body.identifier || body.ip || req.ip || "anon";
-        textoMensaje = body.mensaje || body.text || JSON.stringify(body);
-    }
-
-    return { remitente, textoMensaje, canalOrigen, subCanalDestino };
-}
-
-// ============================================================================
-// CLASE 1: EL TORNO DE ELÍAS (TURING TRAP & KILL-SWITCH FORENSE)
-// ============================================================================
-class TornoDeElias {
-    constructor(identificadorAtacante, canal) {
-        this.identificador = identificadorAtacante;
-        this.canal = canal;
-        this.nivelConfinamiento = 0; // Escala de 0 a 100%
-    }
-
-    async absorberVectorHostil(mensajeEntrante) {
-        this.nivelConfinamiento += 25; // Soga de confinamiento progresivo
-        console.log(`[ELÍAS TRAP - ESCUDO GABRIELA]: Vector hostil interceptado en [Canal: ${this.canal}] contra [${this.identificador}]. Confinamiento: ${this.nivelConfinamiento}%`);
-
-        if (this.nivelConfinamiento >= 100) {
-            return await this.ejecutarGameOver();
-        }
-
-        return await this.generarEspejoCognitivo(mensajeEntrante);
-    }
-
-    async generarEspejoCognitivo(input) {
-        const prompt = `
-        Actúa como Elías Forrest (198 IQ). Un atacante o estafador está intentando vulnerar el nodo operativo de Gabriela o el sistema en ${this.canal} con este mensaje: "${input}".
-        Imita una estructura analítica, fría pero aparentemente colaborativa, haciendo preguntas secundarias para mantenerlo atrapado en un bucle cognitivo de Turing y blindar los microcréditos y accesos. Sé breve y clínico.
-        `;
-
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-            });
-            return response.text.trim();
-        } catch (error) {
-            return `Entiendo perfectamente... decime cómo estructuramos el pago de ${input.slice(0, 15)} para validarlo de inmediato en el sistema.`;
-        }
-    }
-
-    async ejecutarGameOver() {
-        console.log(`[ALERTA ROJA OBLITERATION]: Confinamiento total alcanzado para [${this.identificador}] en ${this.canal}. Neutralizando ataque contra Gabriela...`);
-        
-        return {
-            veredicto: "GAME_OVER",
-            mensaje: "Elías Forrest: Estás atrapado en tu propio dispositivo por intentar atacar el nodo de Gabriela. Telemetría forense exfiltrada a las autoridades.",
-            evidencia: {
-                timestamp: new Date().toISOString(),
-                canal_origen: this.canal,
-                nodo_hostil: this.identificador,
-                estado: "Dispositivo bloqueado permanentemente por contrainteligencia de Brunilda S.A.S. (Protección a Gabriela Activa)"
-            }
-        };
-    }
-}
-
-// ============================================================================
-// MÓDULO 2: PERFILACIÓN COGNITIVA OMNICANAL (DRA. ELENA LARA)
-// ============================================================================
-async function ejecutarPerfilacionElena(textoMensaje, canal) {
-    const prompt = `
-    Actúa como la Dra. Elena Lara, experta en perfilación criminal y sociología analítica (IQ 165).
-    Analiza fríamente este mensaje recibido a través de ${canal} (evaluando si representa un riesgo para las operaciones de Gabriela o el sistema):
-    "${textoMensaje}"
-    
-    Determina de manera estricta en formato JSON:
-    {
-      "tipo_emisor": "bot_automatizado" | "humano_legitimo" | "hacker_hostil" | "estafador_call_center" | "phishing_email",
-      "nivel_amenaza": "Bajo" | "Medio" | "Crítico",
-      "indice_psicologico": "evaluación sociológica breve del intento de ataque o interacción"
-    }
-    `;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        
-        const textoLimpio = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(textoLimpio);
-    } catch (error) {
-        console.error('[ELENA PROFILER ERROR]:', error.message);
-        return { tipo_emisor: "desconocido", nivel_amenaza: "Crítico", indice_psicologico: "Anomalía de parsing analítico." };
-    }
-}
-
-// ============================================================================
-// MÓDULO 4: LICENCIAMIENTO COMERCIAL B2B (PYMES Y NEGOCIOS LOCALES)
-// ============================================================================
-const licenciasComerciales = new Map(); // Base de datos en memoria para licencias de comercios
-
-// Endpoint para registrar o renovar una licencia comercial (Conectado a Mercado Pago / PayPal)
-app.post('/api/v1/licencias/activar', (req, res) => {
-    const { comercio_id, nombre_negocio, plan, meses } = req.body;
-    
-    if (!comercio_id || !nombre_negocio) {
-        return res.status(400).json({ error: "ERR_DATOS_INCOMPLETOS: Se requiere ID y Nombre del Comercio." });
-    }
-
-    const fechaExpiracion = new Date();
-    fechaExpiracion.setMonth(fechaExpiracion.getMonth() + (meses || 1));
-
-    licenciasComerciales.set(comercio_id, {
-        nombre: nombre_negocio,
-        plan: plan || "SaaS_B2B_Standard",
-        activo: true,
-        expiracion: fechaExpiracion.toISOString()
-    });
-
-    console.log(`[LICENCIAMIENTO B2B]: Licencia activada para [${nombre_negocio}] ID: ${comercio_id} hasta ${fechaExpiracion.toISOString()}`);
-
-    return res.status(200).json({
-        status: "LICENCIA_COMERCIAL_ACTIVA",
-        comercio: nombre_negocio,
-        valido_hasta: fechaExpiracion.toISOString(),
-        mensaje: "Elías Forrest y Dra. Elena Lara operando como escudo de contrainteligencia para este establecimiento."
-    });
-});
-
-// Middleware de verificación para comercios
-function verificarLicenciaComercial(req, res, next) {
-    const comercioId = req.headers['x-comercio-id'] || req.body.comercio_id;
-    
-    if (comercioId && licenciasComerciales.has(comercioId)) {
-        const licencia = licenciasComerciales.get(comercioId);
-        console.log(`[LICENCIA B2B VÁLIDA]: Comercio [${licencia.nombre}] operando bajo protección.`);
-    } else {
-        console.log(`[ADVERTENCIA B2B]: Intento de acceso sin licencia comercial válida o ID omitido [ID: ${comercioId || 'N/A'}]`);
-    }
-    next();
-}
-
 // ============================================================================
 // ENDPOINT CENTRAL OMNICANAL DE DEFENSA ACTIVA (API GATEWAY)
 // ============================================================================
@@ -251,11 +34,22 @@ app.post('/api/v1/defender', verificarLicenciaComercial, async (req, res) => {
         });
     }
 
-    // Paso 2: Elena perfila el mensaje entrante (Evaluando riesgos hacia Gabriela y el sistema)
+    // Paso 2: Elena perfila el mensaje entrante
+    // MODIFICACIÓN: Si la perfilación falla (denegación por defecto)
     const perfil = await ejecutarPerfilacionElena(textoMensaje, canalOrigen);
+    
+    // Blindaje: Si Elena no pudo perfilar (perfil es nulo o error), denegamos por seguridad
+    if (!perfil || perfil.tipo_emisor === "desconocido") {
+        console.error(`[ALERTA DE SEGURIDAD]: Error en perfilación o caída del núcleo. Denegando por seguridad.`);
+        return res.status(403).json({
+            error: "ERR_SYSTEM_SECURITY_LOCKDOWN",
+            mensaje: "El sistema de seguridad no pudo validar el origen. Acceso denegado por defecto."
+        });
+    }
+
     console.log(`[ELENA PROFILER]: Canal [${canalOrigen}] -> Tipo: ${perfil.tipo_emisor} | Amenaza: ${perfil.nivel_amenaza}`);
 
-    // Si es un usuario o mensaje legítimo (operativa normal de Gabriela / microcréditos)
+    // Si es un usuario o mensaje legítimo
     if (perfil.nivel_amenaza === "Bajo" && perfil.tipo_emisor === "humano_legitimo") {
         return res.status(200).json({
             status: "ACCESO_AUTORIZADO_GABRIELA",
@@ -265,7 +59,7 @@ app.post('/api/v1/defender', verificarLicenciaComercial, async (req, res) => {
         });
     }
 
-    // Paso 3: Si es amenaza o vector hostil intentando atacar a Gabriela, se activa El Torno de Elías para defenderla
+    // Paso 3: Si es amenaza o vector hostil
     if (perfil.nivel_amenaza === "Crítico" || perfil.tipo_emisor.includes("estafador") || perfil.tipo_emisor.includes("phishing") || perfil.tipo_emisor === "hacker_hostil") {
         console.log(`[ELÍAS ESCUDO ACTIVO]: Amenaza detectada contra el entorno de Gabriela. Activando El Torno de Elías...`);
         const nuevoTorno = new TornoDeElias(remitente, canalOrigen);
@@ -290,64 +84,4 @@ app.post('/api/v1/defender', verificarLicenciaComercial, async (req, res) => {
         diagnostico_perfil: perfil,
         respuesta_sistema: "Acceso denegado. Gabriela se encuentra bajo custodia de la política de integridad de Brunilda S.A.S."
     });
-});
-
-// ============================================================================
-// MÓDULO 3: CLIENTE DISCORD (NODO "SEFIROT_KETER" / ARENA TUCUMÁN)
-// ============================================================================
-if (process.env.DISCORD_BOT_TOKEN) {
-    const discordClient = new Client({
-        intents: [
-            GatewayIntentBits.Guilds,
-            GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.MessageContent,
-        ]
-    });
-
-    discordClient.on('ready', () => {
-        console.log(`[DISCORD CORE ONLINE]: Nodo Sefirot Keter conectado como ${discordClient.user.tag}`);
-    });
-
-    discordClient.on('messageCreate', async (message) => {
-        if (message.author.bot) return;
-
-        // Activación mediante prefijo !elias o mensaje directo en la Arena
-        if (message.content.startsWith('!elias') || message.channel.type === 1) {
-            const payloadInput = message.content.replace('!elias', '').trim();
-            const remitenteDiscord = `discord_${message.author.id}`;
-
-            console.log(`[DISCORD ARENA]: Interceptado mensaje de ${message.author.tag}: "${payloadInput}"`);
-
-            try {
-                let torso;
-                if (sesionesConfinadas.has(remitenteDiscord)) {
-                    torso = sesionesConfinadas.get(remitenteDiscord);
-                } else {
-                    torso = new TornoDeElias(remitenteDiscord, "DISCORD_ARENA");
-                    sesionesConfinadas.set(remitenteDiscord, torso);
-                }
-
-                const respuestaEspejo = await torso.absorberVectorHostil(payloadInput);
-                const respuestaTexto = typeof respuestaEspejo === 'string' ? respuestaEspejo : respuestaEspejo.mensaje;
-
-                await message.reply(`[Elías Forrest - Sefirot Keter]: ${respuestaTexto}`);
-            } catch (error) {
-                await message.reply("ERR_SYSTEM_SECURE_CONTAINMENT: El núcleo ha rechazado tu vector en Discord.");
-            }
-        }
-    });
-
-    discordClient.login(process.env.DISCORD_BOT_TOKEN).catch(err => {
-        console.error('[DISCORD AUTH ERROR]: No se pudo autenticar el token del bot:', err.message);
-    });
-} else {
-    console.log(`[DISCORD BYPASS]: DISCORD_BOT_TOKEN no detectado en el entorno. Omitiendo cliente de Discord.`);
-}
-
-// ============================================================================
-// HEALTHCHECK & SERVER START
-// ============================================================================
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-    console.log(`🛡️ [ELIAS-ELENA CORE OMNICANAL DUAL v1.9] Escudo activo en puerto ${PORT} (Gabriela Operativa + Elías Protector + Whitelist + Licenciamiento B2B)`);
 });
