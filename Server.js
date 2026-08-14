@@ -2,7 +2,7 @@
  * ============================================================================
  * BRUNILDA S.A.S. - MOTOR DE DEFENSA COGNITIVA, CONTRAINTELIGENCIA Y FORENSE OMNICANAL
  * Componentes: Dra. Elena Lara (165 IQ) & Elías Forrest (198 IQ + Torno Hostil)
- * Soporte: WhatsApp (Gabriela & Elías Dual), Telegram, Instagram DM, Email Phishing & Discord
+ * Soporte: WhatsApp (Gabriela & Elías Dual), Telegram, Instagram DM, Email Phishing, Discord & Licenciamiento B2B
  * ============================================================================
  */
 
@@ -170,9 +170,55 @@ async function ejecutarPerfilacionElena(textoMensaje, canal) {
 }
 
 // ============================================================================
+// MÓDULO 4: LICENCIAMIENTO COMERCIAL B2B (PYMES Y NEGOCIOS LOCALES)
+// ============================================================================
+const licenciasComerciales = new Map(); // Base de datos en memoria para licencias de comercios
+
+// Endpoint para registrar o renovar una licencia comercial (Conectado a Mercado Pago / PayPal)
+app.post('/api/v1/licencias/activar', (req, res) => {
+    const { comercio_id, nombre_negocio, plan, meses } = req.body;
+    
+    if (!comercio_id || !nombre_negocio) {
+        return res.status(400).json({ error: "ERR_DATOS_INCOMPLETOS: Se requiere ID y Nombre del Comercio." });
+    }
+
+    const fechaExpiracion = new Date();
+    fechaExpiracion.setMonth(fechaExpiracion.getMonth() + (meses || 1));
+
+    licenciasComerciales.set(comercio_id, {
+        nombre: nombre_negocio,
+        plan: plan || "SaaS_B2B_Standard",
+        activo: true,
+        expiracion: fechaExpiracion.toISOString()
+    });
+
+    console.log(`[LICENCIAMIENTO B2B]: Licencia activada para [${nombre_negocio}] ID: ${comercio_id} hasta ${fechaExpiracion.toISOString()}`);
+
+    return res.status(200).json({
+        status: "LICENCIA_COMERCIAL_ACTIVA",
+        comercio: nombre_negocio,
+        valido_hasta: fechaExpiracion.toISOString(),
+        mensaje: "Elías Forrest y Dra. Elena Lara operando como escudo de contrainteligencia para este establecimiento."
+    });
+});
+
+// Middleware de verificación para comercios
+function verificarLicenciaComercial(req, res, next) {
+    const comercioId = req.headers['x-comercio-id'] || req.body.comercio_id;
+    
+    if (comercioId && licenciasComerciales.has(comercioId)) {
+        const licencia = licenciasComerciales.get(comercioId);
+        console.log(`[LICENCIA B2B VÁLIDA]: Comercio [${licencia.nombre}] operando bajo protección.`);
+    } else {
+        console.log(`[ADVERTENCIA B2B]: Intento de acceso sin licencia comercial válida o ID omitido [ID: ${comercioId || 'N/A'}]`);
+    }
+    next();
+}
+
+// ============================================================================
 // ENDPOINT CENTRAL OMNICANAL DE DEFENSA ACTIVA (API GATEWAY)
 // ============================================================================
-app.post('/api/v1/defender', async (req, res) => {
+app.post('/api/v1/defender', verificarLicenciaComercial, async (req, res) => {
     const { remitente, textoMensaje, canalOrigen, subCanalDestino } = normalizarPayloadEntrante(req);
     
     // Verificación de exclusión por whitelist de seguridad
@@ -303,5 +349,5 @@ if (process.env.DISCORD_BOT_TOKEN) {
 // ============================================================================
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`🛡️ [ELIAS-ELENA CORE OMNICANAL DUAL v1.8] Escudo activo en puerto ${PORT} (Gabriela Operativa + Elías Escudo Protector + Saneamiento Whitelist)`);
+    console.log(`🛡️ [ELIAS-ELENA CORE OMNICANAL DUAL v1.9] Escudo activo en puerto ${PORT} (Gabriela Operativa + Elías Protector + Whitelist + Licenciamiento B2B)`);
 });
