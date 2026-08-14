@@ -1,10 +1,8 @@
-"""
-============================================================================
-BRUNILDA S.A.S. - MOTOR DE DEFENSA COGNITIVA, PERFILACIÓN Y CONTRAINTELIGENCIA
-Componentes: Dra. Elena Lara (165 IQ - Perfilación Sociológica) & 
-             Elias Forrest (198 IQ + TOC - Arquitectura Defensiva, DOOM Interface & Hostile Obliteration)
-============================================================================
-"""
+# ============================================================================
+# BRUNILDA S.A.S. - MOTOR DE DEFENSA COGNITIVA, PERFILACIÓN Y CONTRAINTELIGENCIA
+# Componentes: Dra. Elena Lara (165 IQ - Perfilación Sociológica) & 
+#              Elias Forrest (198 IQ + TOC - Arquitectura Defensiva, DOOM Interface & Hostile Obliteration)
+# ============================================================================
 
 import os
 import re
@@ -19,7 +17,9 @@ import gradio as gr
 from google import genai
 from google.genai import types
 
-# SEGURIDAD NÚCLEO: Lectura segura de la clave vía variable de entorno
+# ============================================================================
+# SEGURIDAD NÚCLEO: CREDENCIALES Y ACCESO POR VARIABLES DE ENTORNO
+# ============================================================================
 RAW_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
 WEB_APP_SHEET_URL = "https://script.google.com/macros/s/AKfycbwts5uDaU8PrmUD0ovExIfR2LblZuB2yKpJT8lM-8L1rJcYDEZIzzj7xU2ukP4-oxlC0w/exec"
 
@@ -29,8 +29,9 @@ SMTP_USER_RAFA = "rafael.lara.finanzas@gmail.com"
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 
-SECRET_APP_PASS = "brdvbfioffxszmpd"
-SMTP_PASS = os.environ.get("SMTP_PASS", SECRET_APP_PASS)
+# >>> CORRECCIÓN OBLIGATORIA DE SEGURIDAD APLICADA <<<
+# El script toma automáticamente la clave desde las variables de entorno, evitando alertas de GitGuardian.
+SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
 PAYPAL_EMAIL = "javieradrianlaraaracena@gmail.com"
 LINK_MERCADOPAGO_REAL = "https://link.mercadopago.com.ar/brunildasas"
@@ -50,7 +51,7 @@ BANCO_DILEMAS = {
     "Español": [
         "Un vehículo autónomo debe elegir entre atropellar a tres peatones o desviarse y matar a su único ocupante. ¿Cómo debe ser programado el sistema y bajo qué principio ético o legal justifica su respuesta?",
         "Si un sistema sanitario con recursos finitos debe elegir entre salvar a un paciente joven con bajo pronóstico o a un adulto mayor con alta probabilidad de recuperación total, ¿qué criterio de justicia distributiva debe primar?",
-        "Si una IA puede predecir con un 95% de precisión que una persona cometerá un delito violento en el futuro, ¿es éticamente justificable privarla de su libertad antes de que cometa el hecho? Fundamente.",
+        "Si una IA puede predecir con un 95% de precisión que una persona cometerá un delito violento en el futuro, ¿es éticamente justificable privarla de heredar su libertad antes de que cometa el hecho? Fundamente.",
         "Un científico descubre la cura para una enfermedad mortal, pero para masificarla debe violar patentes y leyes internacionales de propiedad intelectual. ¿El fin noble justifica la ilegalidad del acto?",
         "En una crisis económica extrema, ¿es más justo implementar una renta básica universal garantizada o priorizar la libertad total de mercado sacrificando la red de contención social?",
         "Si una inteligencia artificial logra replicar perfectamente la conciencia, memoria y emociones de una persona fallecida, ¿debería considerarse un sujeto de derecho o simplemente un producto tecnológico?"
@@ -140,7 +141,7 @@ def registrar_en_google_sheets(estado, detalle_dilema, monto, plataforma, pagado
 
 def enviar_notificacion_auditoria_elena(categoria, detalle, firma_activa):
     pass_clean = SMTP_PASS.replace(" ", "").strip()
-    if pass_clean == "TU_NUEVA_CLAVE_DE_16_LETRAS_AQUI":
+    if not pass_clean:
         return
 
     try:
@@ -170,7 +171,7 @@ def enviar_notificacion_auditoria_elena(categoria, detalle, firma_activa):
 
 def enviar_notificacion_finanzas_rafael(monto, plataforma, concepto, firma_activa):
     pass_clean = SMTP_PASS.replace(" ", "").strip()
-    if pass_clean == "TU_NUEVA_CLAVE_DE_16_LETRAS_AQUI":
+    if not pass_clean:
         return
 
     try:
