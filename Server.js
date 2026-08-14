@@ -21,6 +21,23 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const sesionesConfinadas = new Map();
 
 // ============================================================================
+// CONFIGURACIÓN GLOBAL DE SEGURIDAD Y WHITELIST (REPARACIÓN DE NODO)
+// ============================================================================
+global.numerosLimpios = global.numerosLimpios || []; // Inicialización segura de la whitelist de números
+
+// ============================================================================
+// FUNCIÓN DE FILTRADO DE SEGURIDAD (BOT.JS)
+// ============================================================================
+function esNumeroExcluido(remitente) {
+    const numerosLimpios = global.numerosLimpios || []; 
+
+    // Verificación de existencia y filtrado
+    if (!remitente) return true;
+    
+    return numerosLimpios.some(numero => String(remitente).includes(String(numero)));
+}
+
+// ============================================================================
 // ADAPTADOR MULTICANAL: NORMALIZADOR UNIVERSAL DE ENTRADAS
 // ============================================================================
 function normalizarPayloadEntrante(req) {
@@ -158,6 +175,15 @@ async function ejecutarPerfilacionElena(textoMensaje, canal) {
 app.post('/api/v1/defender', async (req, res) => {
     const { remitente, textoMensaje, canalOrigen, subCanalDestino } = normalizarPayloadEntrante(req);
     
+    // Verificación de exclusión por whitelist de seguridad
+    if (esNumeroExcluido(remitente)) {
+        return res.status(200).json({
+            status: "ACCESO_EXCLUIDO_WHITELIST",
+            remitente: remitente,
+            mensaje: "Nodo en lista blanca. Tráfico autorizado sin inspección de contrainteligencia."
+        });
+    }
+
     console.log(`[LÍNEA C - DUAL CORE]: Interceptando mensaje vía [${canalOrigen} / Subcanal: ${subCanalDestino}] de [${remitente}]: "${textoMensaje.slice(0, 40)}..."`);
 
     // Paso 1: Verificar si el estafador ya está atrapado en el Torno de Elías
@@ -277,5 +303,5 @@ if (process.env.DISCORD_BOT_TOKEN) {
 // ============================================================================
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`🛡️ [ELIAS-ELENA CORE OMNICANAL DUAL v1.7] Escudo activo en puerto ${PORT} (Gabriela Operativa + Elías Escudo Protector)`);
+    console.log(`🛡️ [ELIAS-ELENA CORE OMNICANAL DUAL v1.8] Escudo activo en puerto ${PORT} (Gabriela Operativa + Elías Escudo Protector + Saneamiento Whitelist)`);
 });
